@@ -7,6 +7,6 @@ class SQLBase(DeclarativeBase):
 class User(SQLBase):
     __tablename__ = 'users'
     id : Mapped[int] = mapped_column(primary_key=True)
-    name : Mapped[str] = mapped_column(String(15),nullable=False)
+    name : Mapped[str] = mapped_column(String(15), unique=True, nullable=False)
     password : Mapped[str] = mapped_column(String(15),nullable=False)
     permission : Mapped[str] = mapped_column(String(15),nullable=False)

@@ -1,18 +1,22 @@
 from sqlalchemy import select
 import library.sql.sql_format as sf
 import library.route.route_format as rf
-from typing import Optional, Tuple
+import library.error.error_list as el
 
-async def match_users(data : rf.User, async_session) -> Tuple[Optional[sf.User], bool]:
-    is_login = False
-    match_data = sf.User(**data.model_dump(exclude_none=True))
-    exc = select(sf.User).where(sf.User.name == match_data.name)
+
+async def match_users(data : rf.Login, async_session) -> sf.User:
+    #match_data = sf.User(**data.model_dump(exclude_none=True)) if SQL class create will high efficiency consumption
+    exc = select(sf.User).where(sf.User.name == data.name)
     result = await async_session.execute(exc)
     sql_data = result.scalar().one_or_none()
 
     if sql_data is not None :
-        if (sql_data.name == rf.User.name and
-            sql_data.password == rf.User.password and
-            sql_data.permission == rf.User.permission):
-            is_login = True
-    return sql_data,is_login
+        if (sql_data.name == data.name and
+            sql_data.password == data.password):
+            pass
+        else:
+            raise el.AccountNotMatch
+    else:
+        raise el.AccountNotFound
+
+    return sql_data
