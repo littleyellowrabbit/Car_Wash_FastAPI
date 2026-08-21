@@ -8,7 +8,7 @@ async def match_users(data : rf.Login, async_session) -> sf.User:
     #match_data = sf.User(**data.model_dump(exclude_none=True)) if SQL class create will high efficiency consumption
     exc = select(sf.User).where(sf.User.name == data.name)
     result = await async_session.execute(exc)
-    sql_data = result.scalar().one_or_none()
+    sql_data = result.scalars().one_or_none()
 
     if sql_data is not None :
         if (sql_data.name == data.name and

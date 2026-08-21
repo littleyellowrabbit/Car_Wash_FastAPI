@@ -4,7 +4,7 @@ Python Version:3.14.5
 Project Name:Car Wash.
 Project Description:
     1.Try to simple project and learn simple FastAPI/Godot/postGreSQL function.
-        1.FastAPI:Get/Post/ConfigParser/Async/APIRouter/JWT/Thread/Lock.
+        1.FastAPI:Get/Post/ConfigParser/Async/APIRouter/JWT/Thread/Lock/Redis.
         2.SQL:SQLAlchemy/SQLAlchemy.Orm.
         3.Godot:Fundamental show result and button with action.
     2.Test to run in Linux by WSL Ubuntu and UI program in local.

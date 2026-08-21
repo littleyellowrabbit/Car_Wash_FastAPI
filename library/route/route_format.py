@@ -9,21 +9,25 @@ def permission_trans(permission) -> str:
     else:
         return permission
 
-class Login(BaseModel):
-    name : Annotated[str, Field(min_length=1, max_length=15)]
-    password : Annotated[str, Field(min_length=6, max_length=15)]
+class Base(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
-class LoginResponse(BaseModel):
+class Login(Base):
+    name : Annotated[str, Field(min_length=1, max_length=15, pattern=r"^[a-zA-Z0-9]+$")]
+    password : Annotated[str, Field(min_length=6, max_length=15, pattern=r"^[a-zA-Z0-9]+$")]
+
+class CurrentUser(Base):
+    id: Annotated[int, Field(ge=0)]
+    permission: Annotated[str, Field(min_length=1, max_length=15)]
+
+class LoginResponse(Base):
     id : Annotated[int, Field(ge=0)]
     permission : Annotated[str, Field(min_length=1, max_length=15)]
     exp : Annotated[int, Field(gt=0)]
     access_token : str
 
-
-class User(BaseModel):
+class User(Base):
     id : Annotated[int, Field(ge=0)]
-    name : Annotated[str, Field(min_length=6, max_length=15)]
-    password : Annotated[str, Field(min_length=6, max_length=15)]
+    name : Annotated[str, Field(min_length=6, max_length=15, pattern=r"^[a-zA-Z0-9]+$")]
+    password : Annotated[str, Field(min_length=6, max_length=15, pattern=r"^[a-zA-Z0-9]+$")]
     permission : Annotated[str, BeforeValidator(permission_trans), Field(min_length=1, max_length=15)]
-
-    model_config = ConfigDict(from_attributes=True)
