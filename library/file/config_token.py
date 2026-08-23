@@ -11,25 +11,29 @@ _ALGORITHM = 'RS256'
 
 security_scheme = HTTPBearer()
 
-def encode_private_key(user_payload : dict) -> str :
+
+def initial_token() -> None:
     global _PRIVATE_KEY
     if _PRIVATE_KEY is None:
         base_path = Path(__file__).resolve().parent.parent.parent
         token_config_path = base_path / 'config' / 'private_tEST.pem'
-        with open(token_config_path,'r',encoding='utf-8') as file:
+        with open(token_config_path, 'r', encoding='utf-8') as file:
             _PRIVATE_KEY = file.read()
-    encode_result = jwt.encode(user_payload, _PRIVATE_KEY, algorithm=_ALGORITHM)
-    return encode_result
 
-def decode_public_key(credentials: HTTPAuthorizationCredentials = Depends(security_scheme)) -> r_rf.CurrentUser :
     global _PUBLIC_KEY
     if _PUBLIC_KEY is None:
         base_path = Path(__file__).resolve().parent.parent.parent
         token_config_path = base_path / 'config' / 'public_tEST.pem'
-        with open(token_config_path,'r',encoding='utf-8') as file:
+        with open(token_config_path, 'r', encoding='utf-8') as file:
             _PUBLIC_KEY = file.read()
-    token = credentials.credentials
+
+def encode_private_key(user_payload : dict) -> str :
+    encode_result = jwt.encode(user_payload, _PRIVATE_KEY, algorithm=_ALGORITHM)
+    return encode_result
+
+def decode_public_key(credentials: HTTPAuthorizationCredentials = Depends(security_scheme)) -> r_rf.CurrentUser:
     try:
+        token = credentials.credentials
         payload = jwt.decode(token, _PUBLIC_KEY, algorithm=_ALGORITHM)
         user_data = r_rf.CurrentUser(id = payload.get('id'), permission = payload.get('permission'))
         return user_data
@@ -44,3 +48,7 @@ def decode_public_key(credentials: HTTPAuthorizationCredentials = Depends(securi
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
         )
+
+def get_token(credentials: HTTPAuthorizationCredentials = Depends(security_scheme)) -> str :
+    token = credentials.credentials
+    return token
