@@ -1,6 +1,6 @@
-import library.file.config_redis as f_cr
-import redis
 from typing import Optional
+import redis
+import library.file.config_redis as f_cr
 
 redis_session : Optional[redis.Redis] = None
 

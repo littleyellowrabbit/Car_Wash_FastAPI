@@ -12,12 +12,12 @@ Project Description:
 """
 
 from fastapi import FastAPI
+import uvicorn, multiprocessing
 from contextlib import asynccontextmanager
 from library.route.account import account as account_route
 import library.sql.initialize_sheet as s_is
 import library.redis.redis as r_r
 import library.file.config_token as f_ct
-import uvicorn, multiprocessing
 
 @asynccontextmanager
 async def lifespan(fast_api: FastAPI):

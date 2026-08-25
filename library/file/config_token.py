@@ -4,6 +4,8 @@ import jwt
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi import Depends, status, HTTPException
 import library.route.route_format as r_rf
+from library.file.config_name import redis_name
+import library.redis.redis as r_r
 
 _PRIVATE_KEY : Optional[str] = None
 _PUBLIC_KEY : Optional[str] = None
@@ -28,26 +30,25 @@ def initial_token() -> None:
             _PUBLIC_KEY = file.read()
 
 def encode_private_key(user_payload : dict) -> str :
-    encode_result = jwt.encode(user_payload, _PRIVATE_KEY, algorithm=_ALGORITHM)
-    return encode_result
+    token = jwt.encode(user_payload, _PRIVATE_KEY, algorithm=_ALGORITHM)
+    return token
 
 def decode_public_key(credentials: HTTPAuthorizationCredentials = Depends(security_scheme)) -> r_rf.CurrentUser:
+    token = credentials.credentials
     try:
-        token = credentials.credentials
         payload = jwt.decode(token, _PUBLIC_KEY, algorithm=_ALGORITHM)
+
+        #decode first then check token,because if opposite their may hack use loop to try your access key.
+        if r_r.get_value(redis_name.get('token_access_black_name') + token):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
+
         user_data = r_rf.CurrentUser(id = payload.get('id'), permission = payload.get('permission'))
         return user_data
 
     except jwt.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token expired",
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Token expired")
     except jwt.InvalidTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Invalid credentials")
 
 def get_token(credentials: HTTPAuthorizationCredentials = Depends(security_scheme)) -> str :
     token = credentials.credentials

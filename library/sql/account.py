@@ -20,3 +20,13 @@ async def match_users(data : rf.Login, async_session) -> sf.User:
         raise el.AccountNotFound
 
     return sql_data
+
+async def search_users(id, async_session) -> sf.User:
+    exc = select(sf.User).where(sf.User.id == id)
+    result = await async_session.execute(exc)
+    sql_data = result.scalars().one_or_none()
+
+    if sql_data is None:
+        raise el.AccountNotFound
+
+    return sql_data

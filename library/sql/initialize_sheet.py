@@ -1,6 +1,6 @@
+from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker, AsyncEngine
 from collections.abc import AsyncGenerator
-from typing import Optional
 from library.sql import sql_format as sf
 from library.file import config_sql as cs
 
