@@ -19,3 +19,10 @@ def get_value(key: str) -> Optional[str]:
 def exists(key: str) -> bool:
     return redis_session.exists(key) == 1
 
+def key_delete(key:str) -> None:
+    if key is None:
+        return
+    #redis.delete() whether exist or not,always no error.
+    redis_session.delete(key)
+    return
+

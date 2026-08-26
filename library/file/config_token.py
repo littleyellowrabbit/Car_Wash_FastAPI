@@ -33,17 +33,33 @@ def encode_private_key(user_payload : dict) -> str :
     token = jwt.encode(user_payload, _PRIVATE_KEY, algorithm=_ALGORITHM)
     return token
 
-def decode_public_key(credentials: HTTPAuthorizationCredentials = Depends(security_scheme)) -> r_rf.CurrentUser:
+def decode_public_key_access(credentials: HTTPAuthorizationCredentials = Depends(security_scheme)) -> r_rf.AccessUser:
     token = credentials.credentials
     try:
         payload = jwt.decode(token, _PUBLIC_KEY, algorithm=_ALGORITHM)
-
         #decode first then check token,because if opposite their may hack use loop to try your access key.
         if r_r.get_value(redis_name.get('token_access_black_name') + token):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
 
-        user_data = r_rf.CurrentUser(id = payload.get('id'), permission = payload.get('permission'))
+        user_data = r_rf.AccessUser(id = payload.get('id'), permission = payload.get('permission'), exp = payload.get('exp'))
         return user_data
+
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Invalid credentials")
+
+def decode_public_key_refresh(credentials: HTTPAuthorizationCredentials = Depends(security_scheme)) -> r_rf.RefreshUser:
+    token = credentials.credentials
+    try:
+        # decode first then check token,because if opposite their may hack use loop to try your access key.
+        payload = jwt.decode(token, _PUBLIC_KEY, algorithm=_ALGORITHM)
+        user_data = r_rf.RefreshUser(id = payload.get('id'),exp = payload.get('exp'))
+        redis_key = redis_name.get('token_refresh_name') + str(user_data.id)
+        if r_r.exists(redis_key) and r_r.get_value(redis_key) == token:
+            return user_data
+        else:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
 
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Token expired")

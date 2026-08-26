@@ -12,9 +12,14 @@ def permission_trans(permission) -> str:
 class Base(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-class CurrentUser(Base):
+class AccessUser(Base):
     id: Annotated[int, Field(ge=0)]
     permission: Annotated[str, Field(min_length=1, max_length=15)]
+    exp : Annotated[int, Field(ge=0)]
+
+class RefreshUser(Base):
+    id: Annotated[int, Field(ge=0)]
+    exp: Annotated[int, Field(ge=0)]
 
 class Login(Base):
     name : Annotated[str, Field(min_length=1, max_length=15, pattern=r"^[a-zA-Z0-9]+$")]
@@ -27,9 +32,6 @@ class LoginResponse(Base):
     access_token : str
     refresh_token : str
 
-class Refresh(Base):
-    id : Annotated[int, Field(ge=0)]
-    refresh_token : str
 
 class RefreshResponse(Base):
     id : Annotated[int, Field(ge=0)]
