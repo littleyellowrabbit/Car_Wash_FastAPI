@@ -11,7 +11,9 @@ Project Description:
     3.Deploy software using Docker.
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI,Request,status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 import uvicorn, multiprocessing
 from contextlib import asynccontextmanager
 from library.route.account import account as account_route
@@ -30,7 +32,21 @@ async def lifespan(fast_api: FastAPI):
     if s_is.sql_engine:
         await s_is.sql_engine.dispose()
 
+
 app = FastAPI(lifespan = lifespan)
+
+#Because format limit error can't be intercept
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request,exc: RequestValidationError):
+#request in parameter is necessary even without use it,if without it would error occur.
+    print(request)
+    print(f"{exc.errors()}")
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        content={
+            "detail": "format wrong."
+        }
+    )
 
 app.include_router(account_route)
 

@@ -6,7 +6,7 @@ redis_session : Optional[redis.Redis] = None
 
 def init_redis_session() -> None:
     global redis_session
-    redis_password, redis_host, redis_port = f_cr.read_redis_config()
+    redis_host, redis_port, redis_password = f_cr.read_redis_config()
     redis_session = redis.Redis(host=redis_host, port=int(redis_port), password=redis_password, db=0,decode_responses=True)
 
 
@@ -25,4 +25,3 @@ def key_delete(key:str) -> None:
     #redis.delete() whether exist or not,always no error.
     redis_session.delete(key)
     return
-
