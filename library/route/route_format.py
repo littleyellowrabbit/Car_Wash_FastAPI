@@ -1,5 +1,5 @@
 from typing import Annotated
-from pydantic import BaseModel, Field, ConfigDict, BeforeValidator
+from pydantic import BaseModel, Field, ConfigDict
 
 _PERMISSION_TUPLE = ('Administrator', 'Engineer', 'Operator')
 
@@ -9,8 +9,13 @@ def permission_trans(permission) -> str:
     else:
         return permission
 
+
+
 class Base(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+
+
+#account
 
 class AccessUser(Base):
     id: Annotated[int, Field(ge=0)]
@@ -32,7 +37,6 @@ class LoginResponse(Base):
     access_token : str
     refresh_token : str
 
-
 class RefreshResponse(Base):
     id : Annotated[int, Field(ge=0)]
     permission : Annotated[str, Field(min_length=1, max_length=15)]
@@ -42,8 +46,10 @@ class RefreshResponse(Base):
 
 
 
-class User(Base):
-    id : Annotated[int, Field(ge=0)]
-    name : Annotated[str, Field(min_length=6, max_length=15, pattern=r"^[a-zA-Z0-9]+$")]
-    password : Annotated[str, Field(min_length=6, max_length=15, pattern=r"^[a-zA-Z0-9]+$")]
-    permission : Annotated[str, BeforeValidator(permission_trans), Field(min_length=1, max_length=15)]
+#keyparameter
+class SetParameter(Base):
+    water_pressure : int = Field(ge=0,le=4)
+    wax_type: int = Field(ge=0, le=1)
+    foam_type: int = Field(ge=0, le=1)
+    air_pressure: int = Field(ge=0, le=4)
+

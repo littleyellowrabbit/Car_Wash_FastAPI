@@ -10,13 +10,15 @@ Project Description:
     2.Test to run in Linux by WSL Ubuntu and UI program in local.
     3.Deploy software using Docker.
 """
-
+import asyncio
 from fastapi import FastAPI,Request,status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 import uvicorn, multiprocessing
 from contextlib import asynccontextmanager
 from library.route.account import account as account_route
+from library.route.plc import plc as plc_route
+import library.plc_simulator.plc_simulator_write_bridge as ps_ps
 import library.sql.initialize_sheet as s_is
 import library.redis.redis as r_r
 import library.file.config_token as f_ct
@@ -28,7 +30,15 @@ async def lifespan(fast_api: FastAPI):
     f_ct.initial_token()
     s_is.init_sql_parameter()
     await s_is.init_datasheet()
+
+    ps_ps.running_flag["active"] = True
+    plc_task = asyncio.create_task(asyncio.to_thread(ps_ps.plc_client))
+
     yield
+
+    ps_ps.running_flag["active"] = False
+    await plc_task
+
     if s_is.sql_engine:
         await s_is.sql_engine.dispose()
 
@@ -49,6 +59,7 @@ async def validation_exception_handler(request: Request,exc: RequestValidationEr
     )
 
 app.include_router(account_route)
+app.include_router(plc_route)
 
 if __name__ == "__main__":
     #Prevent Windows exe bug

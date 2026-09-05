@@ -40,7 +40,7 @@ async def user_login(data: r_rf.Login, async_session = Depends(s_is.get_sql_sess
             "exp" : exp_refresh
         }
         refresh_token = f_ct.encode_private_key(refresh_payload)
-        r_r.set_with_expiry(redis_name.get('token_refresh_name') + str(sql_data.id), refresh_token,int(timedelta_refresh.total_seconds()))
+        await r_r.set_with_expiry(redis_name.get('token_refresh_name') + str(sql_data.id), refresh_token,int(timedelta_refresh.total_seconds()))
 
         result = r_rf.LoginResponse(
             id = sql_data.id,
@@ -87,7 +87,7 @@ async def user_refresh_token(refresh_user : r_rf.RefreshUser = Depends(f_ct.deco
         }
 
         refresh_token = f_ct.encode_private_key(refresh_payload)
-        r_r.set_with_expiry(redis_name.get('token_refresh_name') + str(sql_data.id), refresh_token,int(timedelta_refresh.total_seconds()))
+        await r_r.set_with_expiry(redis_name.get('token_refresh_name') + str(sql_data.id), refresh_token,int(timedelta_refresh.total_seconds()))
 
         result = r_rf.RefreshResponse(
             id = sql_data.id,
@@ -109,9 +109,9 @@ async def user_logout(access_user : r_rf.AccessUser = Depends(f_ct.decode_public
     try:
         #still need check access key because their may hack try to auto logout.
         now_time = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)
-        r_r.key_delete(redis_name.get('token_refresh_name') + str(access_user.id))
+        await r_r.key_delete(redis_name.get('token_refresh_name') + str(access_user.id))
         #max() prevent from second to negative number
-        r_r.set_with_expiry(redis_name.get('token_access_black_name') + access_token, str(access_user.id), max(access_user.exp - int(now_time.timestamp()),1))
+        await r_r.set_with_expiry(redis_name.get('token_access_black_name') + access_token, str(access_user.id), max(access_user.exp - int(now_time.timestamp()),1))
         return {'detail' : 'Logout Success'}
 
     except Exception as e:
