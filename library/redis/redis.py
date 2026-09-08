@@ -10,7 +10,7 @@ def init_redis_session() -> None:
     redis_session = aioredis.Redis(host=redis_host, port=int(redis_port), password=redis_password, db=0,decode_responses=True)
 
 
-async def set_with_expiry(key: str, value: str, expiry_seconds: int) -> None:
+async def set_with_expiry(key: str, value: str, expiry_seconds: int =None) -> None:
     await redis_session.set(key, value, ex=expiry_seconds)
 
 async def get_value(key: str) -> Optional[str]:
