@@ -1,7 +1,7 @@
 import route_format as r_rf
 import library.file.config_token as f_ct
 import library.redis.redis as r_r
-from fastapi import Depends, HTTPException, APIRouter, status
+from fastapi import Depends, HTTPException, APIRouter, status, WebSocket, WebSocketDisconnect
 from library.file.config_name import redis_name
 
 plc = APIRouter(prefix="/plc", tags=["plc"])
@@ -17,3 +17,6 @@ async def set_parameter(data:r_rf.SetParameter, _ : r_rf.AccessUser = Depends(f_
         return {'states': 'success','detail': f'{message}'}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=str(e))
+
+@plc.websocket("/real_time_data")
+async def

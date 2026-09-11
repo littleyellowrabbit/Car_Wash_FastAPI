@@ -18,7 +18,7 @@ import uvicorn, multiprocessing
 from contextlib import asynccontextmanager
 from library.route.account import account as account_route
 from library.route.plc import plc as plc_route
-import library.plc_simulator.plc_simulator_write_bridge as ps_ps
+import library.plc_simulator.plc_simulator_bridge as ps_psb
 import library.sql.initialize_sheet as s_is
 import library.redis.redis as r_r
 import library.file.config_token as f_ct
@@ -31,13 +31,16 @@ async def lifespan(fast_api: FastAPI):
     s_is.init_sql_parameter()
     await s_is.init_datasheet()
 
-    ps_ps.running_flag["active"] = True
-    plc_task = asyncio.create_task(asyncio.to_thread(ps_ps.plc_client))
+    ps_psb.running_flag["active"] = True
+    plc_task = asyncio.create_task(asyncio.to_thread(ps_psb.plc_client))
 
     yield
 
-    ps_ps.running_flag["active"] = False
+    ps_psb.running_flag["active"] = False
     await plc_task
+
+    if r_r.redis_pool:
+        await r_r.close_redis_session()
 
     if s_is.sql_engine:
         await s_is.sql_engine.dispose()

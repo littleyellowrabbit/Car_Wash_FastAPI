@@ -12,7 +12,7 @@ from library.file.config_name import redis_name
 account = APIRouter(prefix="/account", tags=["login"])
 
 @account.post("/login", response_model=r_rf.LoginResponse, status_code=status.HTTP_200_OK)
-async def user_login(data: r_rf.Login, async_session = Depends(s_is.get_sql_session)) -> r_rf.LoginResponse:
+async def user_login(data: r_rf.Login, async_session = Depends(s_is.get_sql_session), redis_session = Depends(r_r.get_redis_client)) -> r_rf.LoginResponse:
     try:
         sql_data = await s_a.match_users(data,async_session)
 
@@ -40,7 +40,7 @@ async def user_login(data: r_rf.Login, async_session = Depends(s_is.get_sql_sess
             "exp" : exp_refresh
         }
         refresh_token = f_ct.encode_private_key(refresh_payload)
-        await r_r.set_with_expiry(redis_name.get('token_refresh_name') + str(sql_data.id), refresh_token,int(timedelta_refresh.total_seconds()))
+        await r_r.set_with_expiry(redis_session, redis_name.get('token_refresh_name') + str(sql_data.id), refresh_token,int(timedelta_refresh.total_seconds()))
 
         result = r_rf.LoginResponse(
             id = sql_data.id,
@@ -58,7 +58,7 @@ async def user_login(data: r_rf.Login, async_session = Depends(s_is.get_sql_sess
 
 
 @account.post("/refresh",response_model=r_rf.RefreshResponse, status_code=status.HTTP_200_OK)
-async def user_refresh_token(refresh_user : r_rf.RefreshUser = Depends(f_ct.decode_public_key_refresh), async_session = Depends(s_is.get_sql_session)) -> r_rf.RefreshResponse:
+async def user_refresh_token(refresh_user : r_rf.RefreshUser = Depends(f_ct.decode_public_key_refresh), async_session = Depends(s_is.get_sql_session), redis_session = Depends(r_r.get_redis_client)) -> r_rf.RefreshResponse:
     try:
         sql_data = await s_a.search_users(refresh_user.id, async_session)
         timedelta_access = datetime.timedelta(minutes=30)
@@ -87,7 +87,7 @@ async def user_refresh_token(refresh_user : r_rf.RefreshUser = Depends(f_ct.deco
         }
 
         refresh_token = f_ct.encode_private_key(refresh_payload)
-        await r_r.set_with_expiry(redis_name.get('token_refresh_name') + str(sql_data.id), refresh_token,int(timedelta_refresh.total_seconds()))
+        await r_r.set_with_expiry(redis_session, redis_name.get('token_refresh_name') + str(sql_data.id), refresh_token,int(timedelta_refresh.total_seconds()))
 
         result = r_rf.RefreshResponse(
             id = sql_data.id,
@@ -105,13 +105,13 @@ async def user_refresh_token(refresh_user : r_rf.RefreshUser = Depends(f_ct.deco
 
 
 @account.post("/logout",status_code=status.HTTP_200_OK)
-async def user_logout(access_user : r_rf.AccessUser = Depends(f_ct.decode_public_key_access),access_token : str = Depends(f_ct.get_token)) -> dict:
+async def user_logout(access_user : r_rf.AccessUser = Depends(f_ct.decode_public_key_access),access_token : str = Depends(f_ct.get_token), redis_session = Depends(r_r.get_redis_client)) -> dict:
     try:
         #still need check access key because their may hack try to auto logout.
         now_time = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)
-        await r_r.key_delete(redis_name.get('token_refresh_name') + str(access_user.id))
+        await r_r.key_delete(redis_session, redis_name.get('token_refresh_name') + str(access_user.id))
         #max() prevent from second to negative number
-        await r_r.set_with_expiry(redis_name.get('token_access_black_name') + access_token, str(access_user.id), max(access_user.exp - int(now_time.timestamp()),1))
+        await r_r.set_with_expiry(redis_session, redis_name.get('token_access_black_name') + access_token, str(access_user.id), max(access_user.exp - int(now_time.timestamp()),1))
         return {'detail' : 'Logout Success'}
 
     except Exception as e:

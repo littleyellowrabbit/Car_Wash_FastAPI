@@ -21,6 +21,7 @@ def get_redis_name() -> dict[str,str]:
         parameter_wax_type_name = config.get('name_setting', 'parameter_wax_type')
         parameter_air_pressure_name = config.get('name_setting', 'parameter_air_pressure')
         real_data_name = config.get('name_setting', 'read_data')
+        watchdog_name = config.get('name_setting', 'watchdog')
 
 
         redis_name = {
@@ -33,6 +34,7 @@ def get_redis_name() -> dict[str,str]:
             'parameter_wax_type_name': parameter_wax_type_name,
             'parameter_air_pressure_name': parameter_air_pressure_name,
             'real_data_name': real_data_name,
+            'watchdog': watchdog_name,
         }
     return redis_name
 
