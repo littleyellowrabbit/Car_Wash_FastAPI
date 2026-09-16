@@ -48,8 +48,20 @@ class RefreshResponse(Base):
 
 #keyparameter
 class SetParameter(Base):
-    water_pressure : int = Field(ge=0,le=4)
-    wax_type: int = Field(ge=0, le=1)
-    foam_type: int = Field(ge=0, le=1)
-    air_pressure: int = Field(ge=0, le=4)
+    water_pressure : Annotated[int, Field(ge=0,le=4)]
+    wax_type: Annotated[int, Field(ge=0, le=1)]
+    foam_type: Annotated[int, Field(ge=0, le=1)]
+    air_pressure: Annotated[int, Field(ge=0, le=4)]
 
+
+#plc_return
+class PLCLiveData(Base):
+    parameter_water_pressure: Annotated[int, Field(0,ge=0,le=4)]
+    parameter_wax_type: Annotated[int, Field(0,ge=0,le=1)]
+    parameter_foam_type: Annotated[int, Field(0,ge=0,le=1)]
+    parameter_air_pressure: Annotated[int, Field(0,ge=0,le=4)]
+    watchdog: int
+    water_pressure : int = Field(0,ge=0,le=4)
+    wax_type: str = Field('')
+    foam_type: str = Field('')
+    air_pressure: int = Field(0,ge=0, le=4)

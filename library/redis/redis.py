@@ -23,7 +23,6 @@ async def get_redis_client() -> AsyncGenerator[aioredis.Redis, None]:
     async with aioredis.Redis(connection_pool=redis_pool) as client:
         yield client
 
-
 async def set_with_expiry(client: aioredis.Redis, key: str, value: str, expiry_seconds: int =None, ) -> None:
     await client.set(key, value, ex=expiry_seconds)
 

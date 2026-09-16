@@ -29,39 +29,44 @@ pubsub_pool = redis.ConnectionPool(
     max_connections=5
 )
 
-set_client = redis.ConnectionPool()
+set_client = redis.Redis(connection_pool=set_pool)
+pubsub_client = redis.Redis(connection_pool=pubsub_pool)
 
 def plc_client() -> None:
     global parameter_dict
     loop_time = 0.1
     while running_flag["active"]:
         try:
-            with redis.Redis(host=redis_host, port=int(redis_port), password=redis_password, db=0,
-                                 decode_responses=True, socket_connect_timeout=1) as client:
-                client.ping()
-                with client.pubsub(ignore_subscribe_messages=True) as pubsub:
-                    pubsub.subscribe("plc_parameter_setting")
-                    while running_flag["active"]:
-                        start_time = time.time()
-                        try:
-                            message = pubsub.get_message() #.listen()will stay here till have message ,but get_message() not
-                            if message and message.get('type')=='message':
-                                parameter_dict = json.loads(message['data'])
-                                #PLC寫入
-                                #PLC讀出
-                            if parameter_dict is not None:
-                                for key, value in random_signal(parameter_dict).items():
-                                    client.set(key, value)
-                            elapse_time = time.time() - start_time
-                            time.sleep(max(0.01, loop_time-elapse_time))
-                        except (redis.RedisError, Exception):
-                            break
+            pubsub_client.ping()
+            with pubsub_client.pubsub(ignore_subscribe_messages=True) as pubsub:
+                pubsub.subscribe("plc_parameter_setting")
+                while running_flag["active"]:
+                    start_time = time.time()
+                    try:
+                        message = pubsub.get_message() #.listen()will stay here till have message ,but get_message() not
+                        if message and message.get('type')=='message':
+                            parameter_dict = json.loads(message['data'])
+                            #PLC寫入
+                            #PLC讀出
+                        if parameter_dict is not None:
+                            for key, value in random_signal(parameter_dict).items():
+                                set_client.set(key, value)
+                        elapse_time = time.time() - start_time
+                        time.sleep(max(0.01, loop_time-elapse_time))
+                    except (redis.RedisError, Exception):
+                        break
         except (redis.exceptions.ConnectionError, Exception):
             if not running_flag["active"]:
                 break
             time.sleep(1)
         except KeyboardInterrupt:
             break
+
+    set_client.close()
+    pubsub_client.close()
+
+    set_pool.disconnect()
+    pubsub_pool.disconnect()
 
 
 
@@ -90,11 +95,11 @@ def random_signal(message: dict) -> dict:
         watchdog = int(time.time())
 
         random_dist = {
-            redis_name.get('parameter_water_pressure_name')+redis_name.get('real_data_name'): water_pressure,
-            redis_name.get('parameter_foam_type_name') + redis_name.get('real_data_name'): foam_type,
-            redis_name.get('parameter_wax_type_name') + redis_name.get('real_data_name'): wax_type,
-            redis_name.get('parameter_air_pressure_name') + redis_name.get('real_data_name'): air_pressure,
-            redis_name.get('watchdog_name') + redis_name.get('real_data_name'): watchdog,
+            redis_name.get('water_pressure_name'): water_pressure,
+            redis_name.get('foam_type_name'): foam_type,
+            redis_name.get('wax_type_name'): wax_type,
+            redis_name.get('air_pressure_name'): air_pressure,
+            redis_name.get('watchdog_name'): watchdog,
         }
         result.update(message)
         result.update(random_dist)

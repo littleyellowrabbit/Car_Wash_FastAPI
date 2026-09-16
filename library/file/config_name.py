@@ -20,7 +20,10 @@ def get_redis_name() -> dict[str,str]:
         parameter_foam_type_name = config.get('name_setting', 'parameter_foam_type')
         parameter_wax_type_name = config.get('name_setting', 'parameter_wax_type')
         parameter_air_pressure_name = config.get('name_setting', 'parameter_air_pressure')
-        real_data_name = config.get('name_setting', 'read_data')
+        water_pressure_name = config.get('name_setting', 'water_pressure')
+        foam_type_name = config.get('name_setting', 'foam_type')
+        wax_type_name = config.get('name_setting', 'wax_type')
+        air_pressure_name = config.get('name_setting', 'air_pressure')
         watchdog_name = config.get('name_setting', 'watchdog')
 
 
@@ -33,7 +36,10 @@ def get_redis_name() -> dict[str,str]:
             'parameter_foam_type_name':parameter_foam_type_name,
             'parameter_wax_type_name': parameter_wax_type_name,
             'parameter_air_pressure_name': parameter_air_pressure_name,
-            'real_data_name': real_data_name,
+            'water_pressure_name': water_pressure_name,
+            'foam_type_name': foam_type_name,
+            'wax_type_name': wax_type_name,
+            'air_pressure_name': air_pressure_name,
             'watchdog': watchdog_name,
         }
     return redis_name
