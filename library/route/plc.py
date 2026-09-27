@@ -20,6 +20,17 @@ async def set_parameter(data:r_rf.SetParameter, _ : r_rf.AccessUser = Depends(f_
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=str(e))
 
+@plc.post("/process_start",status_code=status.HTTP_200_OK)
+async def process_start(start: bool,redis_session = Depends(r_r.get_redis_client)) -> dict:
+    try:
+        message = (f'{{{redis_name.get('parameter_process_start_name')}: {start}}}'
+        )
+        await redis_session.publish("plc_parameter_start", message)
+        return {'states': 'success','detail': f'{message}'}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=str(e))
+
+
 @plc.websocket("/real_time_data")
 async def websocket_plc(websocket: WebSocket, redis_session = Depends(r_r.get_redis_client)):
     await websocket.accept()
