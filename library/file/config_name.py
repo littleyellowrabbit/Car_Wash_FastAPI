@@ -30,6 +30,7 @@ def get_redis_name() -> dict[str,str]:
         foam_type_used_name = config.get('name_setting', 'foam_type_used')
         wax_type_used_name = config.get('name_setting', 'wax_type_used')
         air_pressure_used_name = config.get('name_setting', 'air_pressure_used')
+        standby_status_name = config.get('name_setting', 'standby_status')
         preclean_status_name = config.get('name_setting', 'preclean_status')
         chemical_soft_status_name = config.get('name_setting', 'chemical_soft_status')
         physical_clean_status_name = config.get('name_setting', 'physical_clean_status')
@@ -59,6 +60,7 @@ def get_redis_name() -> dict[str,str]:
             'foam_type_used_name': foam_type_used_name,
             'wax_type_used_name': wax_type_used_name,
             'air_pressure_used_name': air_pressure_used_name,
+            'standby_status_name': standby_status_name,
             'preclean_status_name': preclean_status_name,
             'chemical_soft_status_name': chemical_soft_status_name,
             'physical_clean_status_name': physical_clean_status_name,
@@ -67,7 +69,7 @@ def get_redis_name() -> dict[str,str]:
             'process_start_name': process_start_name,
             'process_start_time_name': process_start_time_name,
             'process_end_time_name': process_end_time_name,
-            'watchdog': watchdog_name,
+            'watchdog_name': watchdog_name,
         }
     return redis_name
 
