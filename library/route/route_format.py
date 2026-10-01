@@ -60,8 +60,22 @@ class PLCLiveData(Base):
     parameter_wax_type: Annotated[int, Field(0,ge=0,le=1)]
     parameter_foam_type: Annotated[int, Field(0,ge=0,le=1)]
     parameter_air_pressure: Annotated[int, Field(0,ge=0,le=4)]
-    watchdog: int
-    water_pressure : int = Field(0,ge=0,le=4)
-    wax_type: str = Field('')
-    foam_type: str = Field('')
-    air_pressure: int = Field(0,ge=0, le=4)
+    parameter_process_start: Annotated[bool,'']= False
+    water_pressure: Annotated[int, Field(0,ge=0,le=4)]
+    wax_type: Annotated[str,'']= ''
+    foam_type: Annotated[str,'']= ''
+    air_pressure: Annotated[int, Field(0,ge=0,le=4)]
+    water_pressure_used: Annotated[bool,'']= False
+    foam_type_used: Annotated[bool,'']= False
+    wax_type_used: Annotated[bool,'']= False
+    air_pressure_used: Annotated[bool,'']= False
+    standby_status: Annotated[bool,'']= False
+    preclean_status: Annotated[bool,'']= False
+    chemical_soft_status: Annotated[bool,'']= False
+    physical_clean_status: Annotated[bool,'']= False
+    wax_protect_status: Annotated[bool,'']= False
+    dry_air_status: Annotated[bool,'']= False
+    process_start: Annotated[bool,'']= False
+    process_start_time: Annotated[int,'']= 0
+    process_end_time: Annotated[int,'']= 0
+    watchdog: Annotated[int,'']= 0

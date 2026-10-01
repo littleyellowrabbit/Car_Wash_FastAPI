@@ -1,11 +1,11 @@
-import route_format as r_rf
 import library.file.config_token as f_ct
 import library.redis.redis as r_r
 from fastapi import Depends, HTTPException, APIRouter, status, WebSocket, WebSocketDisconnect
 from library.file.config_name import redis_name
-import library.route.route_format as r_f
+import library.route.route_format as r_rf
 import asyncio
-
+from library.file.config_plc_simulator_default import PLC_DEFAULT_CACHE
+plc_data = PLC_DEFAULT_CACHE.copy()
 plc = APIRouter(prefix="/plc", tags=["plc"])
 
 @plc.post("/set_parameter",status_code=status.HTTP_200_OK)
@@ -34,35 +34,20 @@ async def process_start(start: bool,redis_session = Depends(r_r.get_redis_client
 @plc.websocket("/real_time_data")
 async def websocket_plc(websocket: WebSocket, redis_session = Depends(r_r.get_redis_client)):
     await websocket.accept()
-
-    parameter_water_pressure = redis_name.get('parameter_water_pressure_name')
-    parameter_wax_type_name = redis_name.get('parameter_wax_type_name')
-    parameter_foam_type_name = redis_name.get('parameter_foam_type_name')
-    parameter_air_pressure_name = redis_name.get('parameter_air_pressure_name')
-
-    watchdog = redis_name.get('watchdog_name') + redis_name.get('real_data_name')
-    water_pressure = redis_name.get('water_pressure_name')
-    wax_type_name = redis_name.get('wax_type_name')
-    foam_type_name = redis_name.get('foam_type_name')
-    air_pressure_name = redis_name.get('air_pressure_name')
-
-    keys_to_fetch = [
-        parameter_water_pressure,
-        parameter_wax_type_name,
-        parameter_foam_type_name,
-        parameter_air_pressure_name,
-        watchdog,
-        water_pressure,
-        wax_type_name,
-        foam_type_name,
-        air_pressure_name,
-    ]
+    keys = plc_data.keys()
+    keys_to_fetch = [key for key in keys]
+    keys_name = [name.split(':')[-1] for name in keys]
     try:
         while True:
-            raw_data = await redis_session.mget(keys_to_fetch)
-            raw_dict = {f:v for f,v in zip(keys_to_fetch, raw_data) if v is not None}
+            try:
+                await asyncio.wait_for(websocket.receive_text(), timeout=0.01)
+            except asyncio.TimeoutError:
+                pass
 
-            live_data_model = r_f.PLCLiveData(**raw_dict)
+            raw_data = await redis_session.mget(keys_to_fetch)
+            raw_dict = {f:v for f,v in zip(keys_name, raw_data) if v is not None}
+
+            live_data_model = r_rf.PLCLiveData(**raw_dict)
             await websocket.send_text(live_data_model.model_dump_json())
             await asyncio.sleep(0.1)
 

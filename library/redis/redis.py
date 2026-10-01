@@ -9,7 +9,7 @@ def init_redis_session() -> None:
     if redis_pool is not None:
         return
     redis_host, redis_port, redis_password = f_cr.read_redis_config()
-    redis_pool = aioredis.ConnectionPool(host=redis_host, port=int(redis_port), password=redis_password, db=0,decode_responses=True, retry_on_timeout=True, max_connections=20, socket_timeout=1.0, socket_conect_timeout=1.0)
+    redis_pool = aioredis.ConnectionPool(host=redis_host, port=int(redis_port), password=redis_password, db=0,decode_responses=True, retry_on_timeout=True, max_connections=20, socket_timeout=1.0, socket_connect_timeout=1.0)
 
 async def close_redis_session() -> None:
     global redis_pool
