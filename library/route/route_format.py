@@ -53,6 +53,15 @@ class SetParameter(Base):
     foam_type: Annotated[int, Field(ge=0, le=1)]
     air_pressure: Annotated[int, Field(ge=0, le=4)]
 
+#Start process
+class StartProcess(Base):
+    Start_Process : Annotated[bool, ''] = False
+
+#Stop process
+class StopProcess(Base):
+    Stop_Process : Annotated[bool, ''] = True
+
+
 
 #plc_return
 class PLCLiveData(Base):
@@ -78,4 +87,4 @@ class PLCLiveData(Base):
     process_start: Annotated[bool,'']= False
     process_start_time: Annotated[int,'']= 0
     process_end_time: Annotated[int,'']= 0
-    watchdog: Annotated[int,'']= 0
+    watchdog: Annotated[float,'']= 0

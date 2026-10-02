@@ -1,8 +1,8 @@
-import redis, json, time, random
+import redis, json, time, random, traceback
 import library.file.config_redis as f_cr
 from typing import Optional
 from library.file.config_plc_simulator_default import PLC_DEFAULT_CACHE
-
+from library.file.config_name import redis_name
 
 
 running_flag = {"active": True}
@@ -62,24 +62,32 @@ def plc_client() -> None:
                 while running_flag["active"]:
                     start_time = time.time()
                     try:
-
                         message = pubsub.get_message() #.listen()will stay here till have message ,but get_message() not
                         if message:
                             if message and message.get('type')=='message':
                                 channel = message.get('channel')
                                 data_str = message.get('data','')
 
+                                print(channel)
+
                                 if not data_str:
                                     pass
                                 else:
                                     plc_data_new.update(json.loads(data_str))
-                                process_random_signal(plc_data_new,plc_data_old)
-
 
                                 if channel == "plc_parameter_start":
                                     parameter_dict = json.loads(data_str)
-                                    for key_, value_ in parameter_dict.items():
-                                        set_client.set(key_, value_)
+                                    print(parameter_dict)
+                                    try:
+                                        for key_, value_ in parameter_dict.items():
+                                            print(4)
+                                            print(key_)
+                                            print(value_)
+                                            set_client.set(key_, value_)
+                                            print(5)
+                                    except (redis.RedisError, Exception):
+                                        traceback.print_exc()
+                                        break
 
                                 if channel == "plc_parameter_setting":
                                     parameter_dict = json.loads(data_str)
@@ -87,20 +95,22 @@ def plc_client() -> None:
                                         set_client.set(key_, value_)
                                     #PLC寫入
                                     #PLC讀出
-                                for key_,value_ in plc_data_new:
-                                    if key_ in plc_data_old:
-                                        if plc_data_old[key_] != plc_data_new[key_]:
-                                            set_client.set(key_,value_)
+                        process_random_signal(plc_data_new, plc_data_old)
 
-                        elapse_time = time.time() - start_time
-                        time.sleep(max(0.01, loop_time - elapse_time))
-
-                        plc_data_old = plc_data_new.copy()
-
+                        for key_,value_ in plc_data_new.items():
+                            if key_ in plc_data_old.keys():
+                                if plc_data_old[key_] != plc_data_new[key_]:
+                                    print(6)
+                                    set_client.set(key_,value_)
+                                    print(7)
                     except (redis.RedisError, Exception):
                         break
-                elapse_time = time.time() - start_time
-                time.sleep(max(0.01, loop_time - elapse_time))
+
+                    finally:
+                        elapse_time = time.time() - start_time
+                        time.sleep(max(0.01, loop_time - elapse_time))
+                        plc_data_old = plc_data_new.copy()
+
         except (redis.exceptions.ConnectionError, Exception):
             if not running_flag["active"]:
                 break
@@ -117,59 +127,59 @@ def plc_client() -> None:
 def process_random_signal(plc_data_newer: dict,plc_data_older: dict) -> dict:
     process = ''
     watchdog_signal(plc_data_newer)
-    if plc_data_newer['process_start_name']:
-        if plc_data_newer['process_start_name'] != plc_data_older['process_start_name']:
-            plc_data_newer['process_start_time_name'] = time.time()
-            plc_data_newer['process_end_time_name'] = 0
+    if plc_data_newer[redis_name.get('process_start_name')]:
+        if plc_data_newer[redis_name.get('process_start_name')] != plc_data_older[redis_name.get('process_start_name')]:
+            plc_data_newer[redis_name.get('process_start_time_name')] = time.time()
+            plc_data_newer[redis_name.get('process_end_time_name')] = 0
             water_pressure_signal(plc_data_newer, True)
             foam_type_signal(plc_data_newer, False)
             wax_type_signal(plc_data_newer, False)
             air_pressure_signal(plc_data_newer, True)
 
-        if time.time() - plc_data_newer['process_start_time_name'] <= 10:
+        if time.time() - plc_data_newer[redis_name.get('process_start_time_name')] <= 10:
             process = 'preclean'
             water_pressure_signal(plc_data_newer,False)
             foam_type_signal(plc_data_newer,False)
             wax_type_signal(plc_data_newer,False)
             air_pressure_signal(plc_data_newer,True)
 
-        if time.time() - plc_data_newer['process_start_time_name'] <= 20:
+        if time.time() - plc_data_newer[redis_name.get('process_start_time_name')] <= 20:
             process = 'chemical_soft'
             water_pressure_signal(plc_data_newer,True)
             foam_type_signal(plc_data_newer,True)
             wax_type_signal(plc_data_newer,False)
             air_pressure_signal(plc_data_newer,True)
 
-        if time.time() - plc_data_newer['process_start_time_name'] <= 30:
+        if time.time() - plc_data_newer[redis_name.get('process_start_time_name')] <= 30:
             process = 'physical_clean'
             water_pressure_signal(plc_data_newer,False)
             foam_type_signal(plc_data_newer,True)
             wax_type_signal(plc_data_newer,False)
             air_pressure_signal(plc_data_newer,True)
 
-        if time.time() - plc_data_newer['process_start_time_name'] <= 40:
+        if time.time() - plc_data_newer[redis_name.get('process_start_time_name')] <= 40:
             process = 'wax_protect'
             water_pressure_signal(plc_data_newer,False)
             foam_type_signal(plc_data_newer,False)
             wax_type_signal(plc_data_newer,True)
             air_pressure_signal(plc_data_newer,True)
 
-        if time.time() - plc_data_newer['process_start_time_name'] <= 50:
+        if time.time() - plc_data_newer[redis_name.get('process_start_time_name')] <= 50:
             process = 'dry_air'
             water_pressure_signal(plc_data_newer,True)
             foam_type_signal(plc_data_newer,False)
             wax_type_signal(plc_data_newer,False)
             air_pressure_signal(plc_data_newer,False)
 
-        if time.time() - plc_data_newer['process_start_time_name'] <= 60:
+        if time.time() - plc_data_newer[redis_name.get('process_start_time_name')] <= 60:
             process = 'standby'
             water_pressure_signal(plc_data_newer,True)
             foam_type_signal(plc_data_newer,False)
             wax_type_signal(plc_data_newer,False)
             air_pressure_signal(plc_data_newer,True)
 
-            plc_data_newer['process_end_time_name'] = time.time()
-            plc_data_newer['process_start_name'] = False
+            plc_data_newer[redis_name.get('process_end_time_name')] = time.time()
+            plc_data_newer[redis_name.get('process_start_name')] = False
 
     else:
         process = 'standby'
@@ -179,98 +189,97 @@ def process_random_signal(plc_data_newer: dict,plc_data_older: dict) -> dict:
         air_pressure_signal(plc_data_newer, True)
 
     status_signal(plc_data_newer, process)
-
     return plc_data_newer
 
 def water_pressure_signal(plc_data: dict,zero: bool) -> None:
     if zero:
-        plc_data['water_pressure_name'] = 0
-        plc_data['water_pressure_used_name'] = False
+        plc_data[redis_name.get('water_pressure_name')] = 0
+        plc_data[redis_name.get('water_pressure_used_name')] = False
     else:
-        plc_data['water_pressure_name'] = random.uniform((plc_data.get('parameter_water_pressure_name')+1)*10,
-                                                                   (plc_data.get('parameter_water_pressure_name')+1)*20)
-        plc_data['water_pressure_used_name'] = True
+        plc_data[redis_name.get('water_pressure_name')] = random.uniform((plc_data[redis_name.get('parameter_water_pressure_name')]+1)*10,
+                                                                   (plc_data[redis_name.get('parameter_water_pressure_name')]+1)*20)
+        plc_data[redis_name.get('water_pressure_used_name')] = True
 
 def foam_type_signal(plc_data: dict,used: bool) -> None:
-    if plc_data.get('parameter_foam_type_name') == 0:
+    if plc_data[redis_name.get('parameter_foam_type_name')] == 0:
         foam_type = 'Normal_Foam'
-    elif plc_data.get('parameter_foam_type_name') == 1:
+    elif plc_data[redis_name.get('parameter_foam_type_name')] == 1:
         foam_type = 'Super_Foam'
     else:
         foam_type = 'None'
-    plc_data['foam_type_name'] = foam_type
-    plc_data['foam_type_used_name'] = used
+    plc_data[redis_name.get('foam_type_name')] = foam_type
+    plc_data[redis_name.get('foam_type_used_name')] = used
 
 def wax_type_signal(plc_data: dict,used: bool) -> None:
-    if plc_data.get('parameter_wax_type_name') == 0:
+    if plc_data[redis_name.get('parameter_wax_type_name')] == 0:
         wax_type = 'Normal_Wax'
-    elif plc_data.get('parameter_wax_type_name') == 1:
+    elif plc_data[redis_name.get('parameter_wax_type_name')] == 1:
         wax_type = 'Super_Wax'
     else:
         wax_type = 'None'
-    plc_data['wax_type_name'] = wax_type
-    plc_data['wax_type_used_name'] = used
+    plc_data[redis_name.get('wax_type_name')] = wax_type
+    plc_data[redis_name.get('wax_type_used_name')] = used
 
 def air_pressure_signal(plc_data: dict,zero: bool) -> None:
     if zero:
-        plc_data['air_pressure_name'] = 0
-        plc_data['air_pressure_used_name'] = False
+        plc_data[redis_name.get('air_pressure_name')] = 0
+        plc_data[redis_name.get('air_pressure_used_name')] = False
     else:
-        plc_data['air_pressure_name'] = random.uniform((plc_data.get('parameter_air_pressure_name') + 1) * 15,
-                                                                   (plc_data.get('parameter_air_pressure_name') + 1) * 25)
-        plc_data['air_pressure_used_name'] = True
+        plc_data[redis_name.get('air_pressure_name')] = random.uniform((plc_data[redis_name.get('parameter_air_pressure_name')] + 1) * 15,
+                                                                   (plc_data[redis_name.get('parameter_air_pressure_name')] + 1) * 25)
+        plc_data[redis_name.get('air_pressure_used_name')] = True
 
 def status_signal(plc_data: dict,status: str) -> None:
     if status == 'standby':
-        plc_data['standby_status_name'] = True
-        plc_data['preclean_status_name'] = False
-        plc_data['chemical_soft_status_name'] = False
-        plc_data['physical_clean_status_name'] = False
-        plc_data['wax_protect_status_name'] = False
-        plc_data['dry_air_status_name'] = False
+        plc_data[redis_name.get('standby_status_name')] = True
+        plc_data[redis_name.get('preclean_status_name')] = False
+        plc_data[redis_name.get('chemical_soft_status_name')] = False
+        plc_data[redis_name.get('physical_clean_status_name')] = False
+        plc_data[redis_name.get('wax_protect_status_name')] = False
+        plc_data[redis_name.get('dry_air_status_name')] = False
     elif status == 'preclean':
-        plc_data['standby_status_name'] = False
-        plc_data['preclean_status_name'] = True
-        plc_data['chemical_soft_status_name'] = False
-        plc_data['physical_clean_status_name'] = False
-        plc_data['wax_protect_status_name'] = False
-        plc_data['dry_air_status'] = False
+        plc_data[redis_name.get('standby_status_name')] = False
+        plc_data[redis_name.get('preclean_status_name')] = True
+        plc_data[redis_name.get('chemical_soft_status_name')] = False
+        plc_data[redis_name.get('physical_clean_status_name')] = False
+        plc_data[redis_name.get('wax_protect_status_name')] = False
+        plc_data[redis_name.get('dry_air_status')] = False
     elif status == 'chemical_soft':
-        plc_data['standby_status_name_name'] = False
-        plc_data['preclean_status_name'] = False
-        plc_data['chemical_soft_status_name'] = True
-        plc_data['physical_clean_status_name'] = False
-        plc_data['wax_protect_status_name'] = False
-        plc_data['dry_air_status_name'] = False
+        plc_data[redis_name.get('standby_status_name_name')] = False
+        plc_data[redis_name.get('preclean_status_name')] = False
+        plc_data[redis_name.get('chemical_soft_status_name')] = True
+        plc_data[redis_name.get('physical_clean_status_name')] = False
+        plc_data[redis_name.get('wax_protect_status_name')] = False
+        plc_data[redis_name.get('dry_air_status_name')] = False
     elif status == 'physical_clean_status':
-        plc_data['standby_status_name'] = False
-        plc_data['preclean_status_name'] = False
-        plc_data['chemical_soft_status_name'] = False
-        plc_data['physical_clean_status_name'] = True
-        plc_data['wax_protect_status_name'] = False
-        plc_data['dry_air_status_name'] = False
+        plc_data[redis_name.get('standby_status_name')] = False
+        plc_data[redis_name.get('preclean_status_name')] = False
+        plc_data[redis_name.get('chemical_soft_status_name')] = False
+        plc_data[redis_name.get('physical_clean_status_name')] = True
+        plc_data[redis_name.get('wax_protect_status_name')] = False
+        plc_data[redis_name.get('dry_air_status_name')] = False
     elif status == 'wax_protect_status':
-        plc_data['standby_status_name'] = False
-        plc_data['preclean_status_name'] = False
-        plc_data['chemical_soft_status_name'] = False
-        plc_data['physical_clean_status_name'] = False
-        plc_data['wax_protect_status_name'] = True
-        plc_data['dry_air_status_name'] = False
+        plc_data[redis_name.get('standby_status_name')] = False
+        plc_data[redis_name.get('preclean_status_name')] = False
+        plc_data[redis_name.get('chemical_soft_status_name')] = False
+        plc_data[redis_name.get('physical_clean_status_name')] = False
+        plc_data[redis_name.get('wax_protect_status_name')] = True
+        plc_data[redis_name.get('dry_air_status_name')] = False
     elif status == 'dry_air_status':
-        plc_data['standby_status_name'] = False
-        plc_data['preclean_status_name'] = False
-        plc_data['chemical_soft_status_name'] = False
-        plc_data['physical_clean_status_name'] = False
-        plc_data['wax_protect_status_name'] = False
-        plc_data['dry_air_status_name'] = True
+        plc_data[redis_name.get('standby_status_name')] = False
+        plc_data[redis_name.get('preclean_status_name')] = False
+        plc_data[redis_name.get('chemical_soft_status_name')] = False
+        plc_data[redis_name.get('physical_clean_status_name')] = False
+        plc_data[redis_name.get('wax_protect_status_name')] = False
+        plc_data[redis_name.get('dry_air_status_name')] = True
     else:
-        plc_data['standby_status_name'] = False
-        plc_data['preclean_status_name'] = False
-        plc_data['chemical_soft_status_name'] = False
-        plc_data['physical_clean_status_name'] = False
-        plc_data['wax_protect_status_name'] = False
-        plc_data['dry_air_status_name'] = False
+        plc_data[redis_name.get('standby_status_name')] = False
+        plc_data[redis_name.get('preclean_status_name')] = False
+        plc_data[redis_name.get('chemical_soft_status_name')] = False
+        plc_data[redis_name.get('physical_clean_status_name')] = False
+        plc_data[redis_name.get('wax_protect_status_name')] = False
+        plc_data[redis_name.get('dry_air_status_name')] = False
 
 def watchdog_signal(plc_data: dict) -> None:
-    plc_data['watchdog_name'] = int(time.time())
+    plc_data[redis_name.get('watchdog_name')] = float(time.time())
 
