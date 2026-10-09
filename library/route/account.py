@@ -118,3 +118,29 @@ async def user_logout(access_user : r_rf.AccessUser = Depends(f_ct.decode_public
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
+@account.get("/user_list",status_code=status.HTTP_200_OK)
+async def user_list_update(_ : r_rf.AccessUser = Depends(f_ct.decode_public_key_access),async_session = Depends(s_is.get_sql_session)) -> list:
+    try:
+        user_list = await s_a.user_list(async_session)
+        return user_list
+
+    except Exception as e:
+        raise   HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+@account.post("/user_add",status_code=status.HTTP_200_OK)
+async def user_account_add(user_data: r_rf.AddUser,_ : r_rf.AccessUser = Depends(f_ct.decode_public_key_access),async_session = Depends(s_is.get_sql_session)) -> dict:
+    try:
+        print(user_data)
+        await s_a.user_add(user_data,async_session)
+        return {'detail' : 'Add Success'}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+@account.delete("/user_delete",status_code=status.HTTP_200_OK)
+async def user_account_delete(user_data: r_rf.DelUser,_ : r_rf.AccessUser = Depends(f_ct.decode_public_key_access),async_session = Depends(s_is.get_sql_session)) -> dict:
+    try:
+        print(user_data)
+        await s_a.user_del(user_data,async_session)
+        return {'detail' : 'Delete Success'}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

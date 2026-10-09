@@ -8,7 +8,7 @@ def read_redis_config() -> tuple[str,str,str]:
     global _REDIS_CONFIG_CACHE
     if _REDIS_CONFIG_CACHE is None:
         base_path = Path(__file__).parent.parent.parent
-        config_file = base_path / 'config' / 'redis_config_tEST.ini'
+        config_file = base_path / 'config' / 'redis_config.ini'
 
         redis_config = configparser.ConfigParser()
         redis_config.read(config_file,encoding='utf-8')

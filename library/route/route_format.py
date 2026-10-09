@@ -44,6 +44,13 @@ class RefreshResponse(Base):
     access_token : str
     refresh_token : str
 
+class AddUser(Base):
+    name: Annotated[str, Field(min_length=1, max_length=15, pattern=r"^[a-zA-Z0-9]+$")]
+    password: Annotated[str, Field(min_length=6, max_length=15, pattern=r"^[a-zA-Z0-9]+$")]
+    permission: Annotated[str, Field(min_length=1, max_length=15)]
+
+class DelUser(Base):
+    name: Annotated[str, Field(min_length=1, max_length=15, pattern=r"^[a-zA-Z0-9]+$")]
 
 
 #keyparameter
@@ -70,10 +77,10 @@ class PLCLiveData(Base):
     parameter_foam_type: Annotated[int, Field(0,ge=0,le=1)]
     parameter_air_pressure: Annotated[int, Field(0,ge=0,le=4)]
     parameter_process_start: Annotated[bool,'']= False
-    water_pressure: Annotated[int, Field(0,ge=0,le=4)]
+    water_pressure: Annotated[int, Field(0,ge=-20,le=9999)]
     wax_type: Annotated[str,'']= ''
     foam_type: Annotated[str,'']= ''
-    air_pressure: Annotated[int, Field(0,ge=0,le=4)]
+    air_pressure: Annotated[int, Field(0,ge=-20,le=9999)]
     water_pressure_used: Annotated[bool,'']= False
     foam_type_used: Annotated[bool,'']= False
     wax_type_used: Annotated[bool,'']= False
@@ -85,6 +92,6 @@ class PLCLiveData(Base):
     wax_protect_status: Annotated[bool,'']= False
     dry_air_status: Annotated[bool,'']= False
     process_start: Annotated[bool,'']= False
-    process_start_time: Annotated[int,'']= 0
-    process_end_time: Annotated[int,'']= 0
+    process_start_time: Annotated[float,'']= 0
+    process_end_time: Annotated[float,'']= 0
     watchdog: Annotated[float,'']= 0

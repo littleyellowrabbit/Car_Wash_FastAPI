@@ -1,0 +1,21 @@
+# 排除 Python 快取
+__pycache__/
+*.pyc
+
+# 排除開發工具與 Docker 設定檔
+.idea/
+.git/
+.venv/
+build/
+dist/
+Dockerfile
+docker-compose.yml
+main.spec
+
+# 排除敏感密鑰（非常重要）
+.env
+config/
+sql_config_tEST.ini
+redis_config_tEST.ini
+private_tEST.pem
+public_tEST.pem

@@ -1,0 +1,31 @@
+services:
+  # 貨櫃一：您的 PostgreSQL 資料庫
+  my-postgres-db:
+    image: postgres:18-alpine  # 自動下載官方超輕量化資料庫環境
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: ${DB_USER}         # 您自訂的資料庫帳號
+      POSTGRES_PASSWORD: ${DB_PASSWORD} # 您自訂的資料庫密碼
+      POSTGRES_DB: ${DB_NAME}             # 您自訂的資料庫名稱
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql # 資料會安全存在客戶電腦的 Docker 空間中
+    restart: always
+
+  # 貨櫃二：您的 FastAPI 網頁程式
+  fastapi-backend:
+    build: .
+    container_name: fastapi-container
+    ports:
+      - "8000:8000"
+    depends_on:
+      - my-postgres-db  # 確保資料庫開好後，FastAPI 才啟動
+    volumes:
+      - ./config:/app/config
+    env_file:
+      - .env
+    restart: always
+
+volumes:
+  postgres_data: # 宣告一個用來永久存放資料庫資料的空間

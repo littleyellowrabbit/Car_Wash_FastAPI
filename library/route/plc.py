@@ -26,7 +26,12 @@ async def set_parameter(data:r_rf.SetParameter, _ : r_rf.AccessUser = Depends(f_
 @plc.post("/process_start",status_code=status.HTTP_200_OK)
 async def process_start(data: r_rf.StartProcess,redis_session = Depends(r_r.get_redis_client)) -> dict:
     try:
-        message_dict = {redis_name.get('parameter_process_start_name'): data.Start_Process}
+        if data.Start_Process:
+            trans_value = 1
+        else:
+            trans_value = 0
+
+        message_dict = {redis_name.get('parameter_process_start_name'): trans_value}
         message = json.dumps(message_dict)
         await redis_session.publish("plc_parameter_start", message)
         return {'states': 'success','detail': f'{message}'}
@@ -36,7 +41,12 @@ async def process_start(data: r_rf.StartProcess,redis_session = Depends(r_r.get_
 @plc.post("/process_stop",status_code=status.HTTP_200_OK)
 async def process_stop(data: r_rf.StopProcess,redis_session = Depends(r_r.get_redis_client)) -> dict:
     try:
-        message_dict = {redis_name.get('parameter_process_start_name'): not data.Stop_Process}
+        if data.Stop_Process:
+            trans_value = 0
+        else:
+            trans_value = 1
+
+        message_dict = {redis_name.get('parameter_process_start_name'): trans_value}
         message = json.dumps(message_dict)
         await redis_session.publish("plc_parameter_start", message)
         return {'states': 'success','detail': f'{message}'}
