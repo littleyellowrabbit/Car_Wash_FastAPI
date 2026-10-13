@@ -1,0 +1,48 @@
+name: WashCar AutoTest
+
+# 觸發條件：當程式碼被 push 到 main 分支時，或是發出 PR 時
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # 任務名稱：測試與部署
+  test-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. 複製 GitHub 上的程式碼到虛擬主機
+    - name: 複製程式碼
+      uses: actions/checkout@v4
+
+    # 2. 安裝 Python 環境
+    - name: 設定 Python 環境
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.14' # 可自行修改為您的 Python 版本
+        cache: 'pip'          # 自動快取，加速下次的測試速度
+
+    # 3. 安裝專案需要的套件與 pytest
+    - name: 安裝依賴套件
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    # 4. 執行 pytest 自動測試（最關鍵的守門員）
+    - name: 執行 pytest 自動測試
+      run: |
+        pytest
+
+    # 5. 自動發布（只有當前面 pytest 全部成功 green pass 才會執行）
+    - name: 自動發布部署
+      if: success() # 確保前面的步驟都成功才跑這個
+      run: |
+        echo "測試全數通過！正在啟動自動發布..."
+        # 請在這裡換成您實際的發布指令，例如：
+        # 範例 A (部署到伺服器): ssh 遠端連線執行 git pull
+        # 範例 B (發布 Python 套件): twine upload dist/*
+        # 範例 C (雲端平台): gcloud app deploy 或 aws s3 sync
+        echo "部署完成！"
