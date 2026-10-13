@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY main.py .
 COPY library/ ./library/
 
-# 5. 在容器內建立一個專門放 SQL 資料庫的資料夾
+# 5. 在容器內建立一個專門放 SQL 資料庫的資料夾(存在docker內)
 RUN mkdir -p /app/data
 
 # 6. 宣告容器開放 8000 連接埠

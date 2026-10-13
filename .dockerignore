@@ -15,7 +15,7 @@ main.spec
 # 排除敏感密鑰（非常重要）
 .env
 config/
-sql_config_tEST.ini
-redis_config_tEST.ini
-private_tEST.pem
-public_tEST.pem
+sql_config_lofi.ini
+redis_config_lofi.ini
+private_lofi.pem
+public_lofi.pem

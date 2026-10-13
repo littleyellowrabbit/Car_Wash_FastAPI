@@ -1,7 +1,7 @@
 services:
   # 貨櫃一：您的 PostgreSQL 資料庫
   my-postgres-db:
-    image: postgres:18-alpine  # 自動下載官方超輕量化資料庫環境
+    image: postgres:16-alpine  # 自動下載官方超輕量化資料庫環境
     container_name: postgres-db
     environment:
       POSTGRES_USER: ${DB_USER}         # 您自訂的資料庫帳號
@@ -10,10 +10,20 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql # 資料會安全存在客戶電腦的 Docker 空間中
+      - postgres_data:/var/lib/postgresql/data # 資料會安全存在客戶電腦的 Docker 空間中
+        #上面要搭配最下面的volumes:postgres_data: 因為不想弄髒別人電腦
+        #不然應該寫- ./db_data:/var/lib/postgresql/data 這樣才有資料庫在docker外備份
     restart: always
 
-  # 貨櫃二：您的 FastAPI 網頁程式
+  # 貨櫃二：您的 Redis
+  my-redis:
+    image: redis:7-alpine  # 自動下載官方超輕量化資料庫環境
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: always
+
+  # 貨櫃三：您的 FastAPI 網頁程式
   fastapi-backend:
     build: .
     container_name: fastapi-container
@@ -21,6 +31,7 @@ services:
       - "8000:8000"
     depends_on:
       - my-postgres-db  # 確保資料庫開好後，FastAPI 才啟動
+      - my-redis
     volumes:
       - ./config:/app/config
     env_file:
